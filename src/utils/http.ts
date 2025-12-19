@@ -66,7 +66,7 @@ class Http {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const data: any = error.response?.data
           const message = data.message || error.message
-          toast.error(message, { autoClose: 2000 })
+          toast.error(message, { autoClose: 1000 })
         }
         console.log(error)
         return Promise.reject(error)

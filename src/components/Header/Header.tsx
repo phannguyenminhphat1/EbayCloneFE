@@ -1,17 +1,44 @@
-import { NavLink } from 'react-router-dom'
+import { createSearchParams, Link, NavLink, useNavigate } from 'react-router-dom'
 import Navbar from '../Navbar'
 import { ShoppingCartIcon } from '@heroicons/react/24/outline'
 import Popover from '../Popover'
-import { useMutation } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import authApi from 'src/apis/auth.api'
 import { getRefreshTokenFromLS } from 'src/utils/auth'
 import { toast } from 'react-toastify'
 import { useContext } from 'react'
 import { AppContext } from 'src/contexts/app.context'
 import path from 'src/constant/path'
+import categoryApi from 'src/apis/category.api'
+import { useForm } from 'react-hook-form'
+import { schema, Schema } from 'src/utils/rules'
+import { omit } from 'lodash'
+import useQueryConfig from 'src/hooks/useQueryConfig'
+import { yupResolver } from '@hookform/resolvers/yup'
+import purchaseApi from 'src/apis/purchase.api'
+import { purchaseStatusString } from 'src/constant/purchaseConstant'
+import { PurchaseListStatus } from 'src/types/purchase.type'
+import { generateNameId } from 'src/utils/utils'
+
+type FormData = Pick<Schema, 'product_name'> & {
+  category_id?: string
+}
+const MAX_PURCHASES = 4
+
+const formSchema = schema.pick(['product_name'])
 
 export default function Header() {
+  const queryConfig = useQueryConfig()
+  const queryClient = useQueryClient()
+  const navigate = useNavigate()
   const { isAuthenticated, setIsAuthenticated, profile, setProfile } = useContext(AppContext)
+  const { register, handleSubmit } = useForm<FormData>({
+    defaultValues: {
+      product_name: '',
+      category_id: ''
+    },
+    resolver: yupResolver<FormData>(formSchema)
+  })
   const rfToken = getRefreshTokenFromLS()
 
   const logoutMutation = useMutation({
@@ -20,12 +47,50 @@ export default function Header() {
       setIsAuthenticated(false)
       setProfile(null)
       toast.success(res.data.message, { autoClose: 1000 })
+      queryClient.removeQueries({ queryKey: ['purchases', { status: purchaseStatusString.InCart }] })
     }
   })
+
+  const { data: categoriesData } = useQuery({
+    queryKey: ['get-categories'],
+    queryFn: () => categoryApi.getCategories()
+  })
+
+  const { data: purchasesInCartData } = useQuery({
+    queryKey: ['purchases', { status: purchaseStatusString.InCart }],
+    queryFn: () => purchaseApi.getOrders({ status: purchaseStatusString.InCart as PurchaseListStatus }),
+    enabled: isAuthenticated
+  })
+
+  const purchasesInCart = purchasesInCartData?.data.data?.data.orders
 
   const handleLogout = () => {
     logoutMutation.mutate()
   }
+
+  const onSubmit = handleSubmit((data) => {
+    const config = queryConfig.order
+      ? omit(
+          {
+            ...queryConfig,
+            name: data.product_name,
+            category: data.category_id || ''
+          },
+          ['order', 'sort_by', 'price_min', 'price_max']
+        )
+      : omit(
+          {
+            ...queryConfig,
+            name: data.product_name,
+            category: data.category_id || ''
+          },
+          ['price_min', 'price_max']
+        )
+    navigate({
+      pathname: path.productList,
+      search: createSearchParams(config).toString()
+    })
+  })
 
   return (
     <header className='shadow bg-white'>
@@ -71,13 +136,13 @@ export default function Header() {
               <div>
                 Hi!{' '}
                 <span>
-                  <NavLink to='/login' className='underline text-blue-600'>
+                  <NavLink to={path.login} className='underline text-blue-600'>
                     Sign in
                   </NavLink>
                 </span>{' '}
                 or
                 <span>
-                  <NavLink to='/register' className='underline text-blue-600'>
+                  <NavLink to={path.register} className='underline text-blue-600'>
                     {' '}
                     Register
                   </NavLink>
@@ -92,7 +157,7 @@ export default function Header() {
       <div className='container py-3 flex items-center justify-between'>
         {/* Logo */}
         <div className='flex items-center gap-3'>
-          <NavLink to='/'>
+          <NavLink to={path.home}>
             <svg
               xmlns='http://www.w3.org/2000/svg'
               width='117'
@@ -125,17 +190,27 @@ export default function Header() {
         </div>
 
         {/* Search bar */}
-        <div className='flex flex-1 mx-6'>
+        <form className='flex flex-1 mx-6' onSubmit={onSubmit}>
           <input
             type='text'
             placeholder='Search for anything'
             className='flex-1 border outline-none border-r-0 px-4 py-2 rounded-l text-[15px]'
+            {...register('product_name')}
           />
-          <select className='border  px-3 py-2 text-sm'>
-            <option>All Categories</option>
+
+          <select {...register('category_id')} className='border max-w-40  px-3 py-2 text-sm'>
+            <option value=''>All Categories</option>
+            {categoriesData &&
+              categoriesData.data.data?.map((item) => {
+                return (
+                  <option value={item.id} className='' key={item.id}>
+                    {item.name}
+                  </option>
+                )
+              })}
           </select>
           <button className='bg-blue-600 text-white px-5 py-2 rounded-r hover:bg-blue-700'>Search</button>
-        </div>
+        </form>
         {/* Cart */}
         <Popover
           placement='bottom-end'
@@ -145,61 +220,97 @@ export default function Header() {
               <ShoppingCartIcon className='w-7 h-7' />
 
               {/* Badge (nếu muốn show số lượng) */}
-              <span className='absolute -top-1 -right-2 bg-red-500 text-white text-xs px-1 rounded-full'>0</span>
+              {isAuthenticated && purchasesInCart && (
+                <span className='absolute -top-1 -right-2 bg-red-500 text-white text-xs px-1 rounded-full'>
+                  {purchasesInCart[0].order_details.length}
+                </span>
+              )}
             </>
           }
           renderPopover={
             <div className='w-80 bg-white rounded-xl shadow-xl border overflow-hidden'>
-              {/* Header */}
-              <div className='p-4 border-b'>
-                <h2 className='font-semibold text-lg'>Shopping cart</h2>
-              </div>
-              {/* Item */}
-              <div className='p-4 flex gap-3 border-b'>
-                <img src='https://via.placeholder.com/80' className='w-20 h-20 rounded object-cover' alt='item' />
-                <div className='flex-1'>
-                  <a href='#' className='text-sm text-blue-600 hover:underline line-clamp-2'>
-                    Rostra 250-1223 Universal Electronic Cruise Control Kit
-                  </a>
-                  <div className='mt-1'>
-                    <p className='font-semibold'>$269.00</p>
-                    <p className='text-sm text-gray-500'>+ US $79.80</p>
+              {purchasesInCart && purchasesInCart.length > 0 ? (
+                <div className='text-sm'>
+                  {/* Header */}
+                  <div className='p-4 border-b'>
+                    <h2 className='font-semibold text-lg'>Shopping cart</h2>
+                  </div>
+                  {/* Item */}
+                  {purchasesInCart[0].order_details.slice(0, MAX_PURCHASES).map((item) => {
+                    return (
+                      <div className='p-3 flex gap-3 border-b'>
+                        <img
+                          src={item.product_image[0].image_url}
+                          className='w-12 h-12 rounded object-cover'
+                          alt='item'
+                        />
+                        <div className='flex-1'>
+                          <Link
+                            to={`/product-detail/${generateNameId({ name: item.product_name, id: item.product_id.toString() })}`}
+                            className='text-sm text-blue-600 hover:underline line-clamp-2'
+                          >
+                            {item.product_name}
+                          </Link>
+                          <div className='mt-1'>
+                            <p className='font-semibold'>Unit Price: ${item.unit_price}</p>
+                          </div>
+                        </div>
+                        <div className='flex flex-col items-end justify-between'>
+                          <span className='text-sm text-gray-600'>Qty: {item.quantity}</span>
+                          <button className='text-gray-500 hover:text-red-500'>
+                            <svg
+                              xmlns='http://www.w3.org/2000/svg'
+                              fill='none'
+                              viewBox='0 0 24 24'
+                              strokeWidth={1.5}
+                              stroke='currentColor'
+                              className='size-6'
+                            >
+                              <path
+                                strokeLinecap='round'
+                                strokeLinejoin='round'
+                                d='m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0'
+                              />
+                            </svg>
+                          </button>
+                        </div>
+                      </div>
+                    )
+                  })}
+                  {/* Total */}
+                  <div className='p-4 border-b flex justify-between text-[15px]'>
+                    <span className='font-medium'>Total</span>
+                    <span className='font-semibold'>${purchasesInCart[0].total_amount}</span>
+                  </div>
+                  {/* Other */}
+                  {purchasesInCart[0].order_details.length > MAX_PURCHASES && (
+                    <div className='px-4 py-2'>
+                      <span className=''>
+                        Other {purchasesInCart[0].order_details.length - MAX_PURCHASES} items in cart
+                      </span>
+                    </div>
+                  )}
+
+                  {/* Actions */}
+                  <div className='p-4 flex flex-col gap-3'>
+                    <button className='bg-blue-600 text-white py-2 rounded-lg font-medium hover:bg-blue-700 transition'>
+                      Checkout
+                    </button>
+                    <button className='border border-blue-600 text-blue-600 py-2 rounded-lg font-medium hover:bg-blue-50 transition'>
+                      View cart
+                    </button>
                   </div>
                 </div>
-                <div className='flex flex-col items-end justify-between'>
-                  <span className='text-sm text-gray-600'>Qty: 1</span>
-                  <button className='text-gray-500 hover:text-red-500'>
-                    <svg
-                      xmlns='http://www.w3.org/2000/svg'
-                      fill='none'
-                      viewBox='0 0 24 24'
-                      strokeWidth={1.5}
-                      stroke='currentColor'
-                      className='size-6'
-                    >
-                      <path
-                        strokeLinecap='round'
-                        strokeLinejoin='round'
-                        d='m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0'
-                      />
-                    </svg>
-                  </button>
+              ) : (
+                <div className='p-4 text-sm flex flex-col items-center justify-center text-gray-600'>
+                  <img
+                    src='	https://deo.shopeemobile.com/shopee/shopee-pcmall-live-sg/assets/12fe8880616de161.png'
+                    alt='no-image'
+                    className='w-40 h-w-40 object-cover'
+                  />
+                  <p>No items in cart</p>
                 </div>
-              </div>
-              {/* Total */}
-              <div className='p-4 border-b flex justify-between text-[15px]'>
-                <span className='font-medium'>Total</span>
-                <span className='font-semibold'>$348.80</span>
-              </div>
-              {/* Actions */}
-              <div className='p-4 flex flex-col gap-3'>
-                <button className='bg-blue-600 text-white py-2 rounded-lg font-medium hover:bg-blue-700 transition'>
-                  Checkout
-                </button>
-                <button className='border border-blue-600 text-blue-600 py-2 rounded-lg font-medium hover:bg-blue-50 transition'>
-                  View cart
-                </button>
-              </div>
+              )}
             </div>
           }
           className='relative cursor-pointer hover:text-blue-600'

@@ -4,11 +4,13 @@ import { useContext, Suspense, lazy } from 'react'
 import Home from './pages/Home'
 import Login from './pages/Login'
 import Register from './pages/Register'
-import CategoryListing from './pages/CategoryListing'
 import MainLayout from './layouts/MainLayout/MainLayout'
 import { AppContext } from './contexts/app.context'
 import Profile from './pages/Profile'
 import path from './constant/path'
+import ProductList from './pages/ProductList'
+import ProductDetail from './pages/ProductDetail'
+import Cart from './pages/Cart'
 
 function ProtectedRoute() {
   const { isAuthenticated } = useContext(AppContext)
@@ -47,6 +49,7 @@ export default function useRouteElements() {
     // Public Route
     {
       path: path.home,
+      index: true,
       element: (
         <MainLayout>
           <Home />
@@ -54,10 +57,18 @@ export default function useRouteElements() {
       )
     },
     {
-      path: 'category-listing',
+      path: path.productList,
       element: (
         <MainLayout>
-          <CategoryListing />
+          <ProductList />
+        </MainLayout>
+      )
+    },
+    {
+      path: path.productDetail,
+      element: (
+        <MainLayout>
+          <ProductDetail />
         </MainLayout>
       )
     },
@@ -68,6 +79,10 @@ export default function useRouteElements() {
         {
           path: path.profile,
           element: <Profile />
+        },
+        {
+          path: path.cart,
+          element: <Cart />
         }
       ]
     },

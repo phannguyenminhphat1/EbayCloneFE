@@ -11,3 +11,24 @@ body {
   /* font-family: "helvetica neue", Helvetica, Arial, sans-serif; */
   font-weight: 400;
 }
+/* Custom Swiper Buttons */
+.swiper-button-prev,
+.swiper-button-next {
+  @apply bg-gray-100/90 shadow-lg text-sm rounded-full p-2 font-semibold flex items-center justify-center text-gray-700 
+         hover:bg-gray-200 hover:shadow-xl transition-all duration-200;
+}
+
+/* Icon màu đen */
+.swiper-button-prev::after,
+.swiper-button-next::after {
+  @apply text-black text-base font-bold;
+}
+
+/* Move buttons closer */
+.swiper-button-prev {
+  @apply -left-3;
+}
+
+.swiper-button-next {
+  @apply -right-3;
+}

@@ -8,8 +8,8 @@ export default function CarouselHome() {
           <div className='flex justify-around items-center gap-4 bg-gray-100 w-full h-full px-10'>
             <div className='flex flex-col gap-4'>
               <p className='font-bold text-black text-3xl'>Top tech for your ride</p>
-              <p className='font-semibold'>Don't miss a chance to save on items you've been looking for</p>
-              <button className='rounded-full transition-all px-6 hover:bg-opacity-80 py-3 bg-black text-white border w-fit'>
+              <p className=''>Don't miss a chance to save on items you've been looking for</p>
+              <button className='rounded-full transition-all font-bold px-6 hover:bg-opacity-80 py-2.5 bg-black text-white border w-fit'>
                 Explore now
               </button>
             </div>
@@ -24,8 +24,8 @@ export default function CarouselHome() {
           <div className='flex justify-between items-center gap-4 bg-gray-100 w-full h-full px-10'>
             <div className='flex flex-col gap-4'>
               <p className='font-bold text-black text-3xl'>Top tech for your ride</p>
-              <p className='font-semibold'>Don't miss a chance to save on items you've been looking for</p>
-              <button className='rounded-full transition-all px-6 hover:bg-opacity-80 py-3 bg-black text-white border w-fit'>
+              <p className=''>Don't miss a chance to save on items you've been looking for</p>
+              <button className='rounded-full font-bold transition-all px-6 hover:bg-opacity-80 py-2.5 bg-black text-white border w-fit'>
                 Explore now
               </button>
             </div>
@@ -62,8 +62,8 @@ export default function CarouselHome() {
           <div className='flex justify-between items-center gap-4 bg-gray-100 w-full h-full px-10'>
             <div className='flex flex-col gap-4'>
               <p className='font-bold text-black text-3xl'>From selfies to streaming</p>
-              <p className='font-semibold'>Discover top brands and the latest models at prices you'll love</p>
-              <button className='rounded-full transition-all px-6 hover:bg-opacity-80 py-3 bg-black text-white border w-fit'>
+              <p className=''>Discover top brands and the latest models at prices you'll love</p>
+              <button className='rounded-full font-bold transition-all px-6 hover:bg-opacity-80 py-2.5 bg-black text-white border w-fit'>
                 Upgrade now
               </button>
             </div>
