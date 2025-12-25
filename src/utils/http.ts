@@ -68,7 +68,10 @@ class Http {
           const message = data.message || error.message
           toast.error(message, { autoClose: 1000 })
         }
-        console.log(error)
+        if (error.response?.status === HttpStatusCode.Unauthorized) {
+          clearLS()
+          console.log(error.response?.status)
+        }
         return Promise.reject(error)
       }
     )

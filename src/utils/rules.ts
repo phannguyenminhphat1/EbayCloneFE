@@ -63,9 +63,13 @@ export const schema = yup.object({
 })
 
 export const userSchema = yup.object({
+  username: yup
+    .string()
+    .min(2, 'Username must be at least 2 characters')
+    .max(100, 'Username must not exceed 100 characters'),
   fullname: yup.string().min(2, 'Name must be at least 2 characters').max(100, 'Name must not exceed 100 characters'),
   email: yup.string().required('Email is required').email('Invalid email format'),
-  phone_number: yup
+  phone: yup
     .string()
     .trim()
     .matches(/^(\+84|0)(3|5|7|8|9)([0-9]{8})$/, 'Invalid phone number'),
@@ -76,6 +80,8 @@ export const userSchema = yup.object({
 
   password: yup.string().required('Password is required'),
 
+  old_password: yup.string().required('Old password is required'),
+
   new_password: handlePasswordSchemaYup(),
 
   confirm_password: yup
@@ -83,10 +89,11 @@ export const userSchema = yup.object({
     .required('Confirm password is required')
     .oneOf([yup.ref('new_password')], 'Confirm password does not match'),
 
-  avatar: yup.string().matches(/^https?:\/\/.*\.(jpg|jpeg|png|gif|bmp|webp)$/i, 'Invalid image URL')
+  ava: yup.string().matches(/^https?:\/\/.*\.(jpg|jpeg|png|gif|bmp|webp)$/i, 'Invalid image URL')
 })
 export const registerSchema = schema.omit(['phone_number', 'price_max', 'price_min', 'product_name'])
 export const loginSchema = userSchema.pick(['email', 'password'])
+export const updateUserSchema = userSchema.pick(['username', 'fullname', 'phone', 'address', 'ava'])
 
 export type UserSchema = yup.InferType<typeof userSchema>
 export type Schema = yup.InferType<typeof schema>

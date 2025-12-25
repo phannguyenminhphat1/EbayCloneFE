@@ -6,8 +6,9 @@ export interface User {
   email: string
   password_hash: string
   fullname: string
-  phone: string
-  address: string
+  phone?: string
+  ava?: string
+  address?: string
   user_roles: UserRole[]
   created_at: string
 }

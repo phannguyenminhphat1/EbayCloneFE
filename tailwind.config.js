@@ -1,5 +1,6 @@
 import flowbite from 'flowbite/plugin'
 import plugin from 'tailwindcss/plugin'
+import forms from '@tailwindcss/forms'
 
 /** @type {import('tailwindcss').Config} */
 export const content = [
@@ -19,6 +20,7 @@ export const theme = {
   }
 }
 export const plugins = [
+  forms(),
   plugin(function ({ addComponents, theme }) {
     addComponents({
       '.container': {

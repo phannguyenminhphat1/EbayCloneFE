@@ -5,6 +5,7 @@ import { toast } from 'react-toastify'
 import productApi from 'src/apis/product.api'
 import purchaseApi from 'src/apis/purchase.api'
 import QuantityController from 'src/components/QuantityController'
+import path from 'src/constant/path'
 import { purchaseStatusString } from 'src/constant/purchaseConstant'
 import { AppContext } from 'src/contexts/app.context'
 import { ImageType, ListingProductDetail } from 'src/types/product.type'
@@ -52,6 +53,8 @@ export default function ProductDetail() {
 
   if (!product) return null
 
+  const listingId = product.product.id
+
   const prod: ListingProductDetail = {
     ...product.product,
     images: imagesProduct
@@ -92,11 +95,45 @@ export default function ProductDetail() {
       })
     } else {
       addToCartMutation.mutate(
-        { product_id: Number(id), quantity: buyCount.toString() },
+        { listing_id: Number(listingId), quantity: buyCount.toString() },
         {
           onSuccess: (res) => {
             toast.success(res.data.message, { autoClose: 1000 })
             queryClient.invalidateQueries({ queryKey: ['purchases', { status: purchaseStatusString.InCart }] })
+          },
+          onError: (err) => {
+            toast.error(err.message, { autoClose: 1000 })
+          }
+        }
+      )
+    }
+  }
+
+  const handleBuyNow = () => {
+    if (!isAuthenticated) {
+      Swal.fire({
+        title: 'You’re logged out',
+        text: 'Log in to add to cart',
+        showCancelButton: true,
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#d33',
+        confirmButtonText: 'Login now'
+      }).then((result) => {
+        if (result.isConfirmed) {
+          navigate('/login')
+        }
+      })
+    } else {
+      addToCartMutation.mutate(
+        { listing_id: Number(listingId), quantity: buyCount.toString() },
+        {
+          onSuccess: (res) => {
+            queryClient.invalidateQueries({ queryKey: ['purchases', { status: purchaseStatusString.InCart }] })
+            navigate(path.cart, {
+              state: {
+                orderDetailId: res.data.data?.order_detail_id
+              }
+            })
           },
           onError: (err) => {
             toast.error(err.message, { autoClose: 1000 })
@@ -189,17 +226,27 @@ export default function ProductDetail() {
               “ {product.product.description} The item shows moderate wear and is fully functional…”
             </p>
           </div>
-          <QuantityController
-            prod={product.product}
-            value={buyCount}
-            onIncrease={handleBuyCount}
-            onDecrease={handleBuyCount}
-            onType={handleBuyCount}
-            max={product.product.stock}
-          />
+          <div className='my-4'>
+            <p className='font-semibold mb-2'>Quantity:</p>
+            <div className='flex items-center'>
+              <QuantityController
+                value={buyCount}
+                onIncrease={handleBuyCount}
+                onDecrease={handleBuyCount}
+                onType={handleBuyCount}
+                max={product.product.stock}
+              />
+              <span className='ml-3 text-gray-500'>• {prod.total_sold} sold</span>
+            </div>
+            <p className='text-sm mt-2 text-gray-600'>In stock: {prod.stock}</p>
+          </div>
+
           {/* BUTTONS */}
           <div className='space-y-3 mt-6'>
-            <button className='w-full py-3 bg-blue-600 text-white rounded-full font-semibold hover:bg-blue-700'>
+            <button
+              onClick={handleBuyNow}
+              className='w-full py-3 bg-blue-600 text-white rounded-full font-semibold hover:bg-blue-700'
+            >
               Buy It Now
             </button>
             <button

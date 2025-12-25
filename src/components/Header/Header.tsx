@@ -56,7 +56,7 @@ export default function Header() {
     queryFn: () => categoryApi.getCategories()
   })
 
-  const { data: purchasesInCartData } = useQuery({
+  const { data: purchasesInCartData, refetch } = useQuery({
     queryKey: ['purchases', { status: purchaseStatusString.InCart }],
     queryFn: () => purchaseApi.getOrders({ status: purchaseStatusString.InCart as PurchaseListStatus }),
     enabled: isAuthenticated
@@ -66,6 +66,18 @@ export default function Header() {
 
   const handleLogout = () => {
     logoutMutation.mutate()
+  }
+
+  const deletePurchasesMutation = useMutation({
+    mutationFn: purchaseApi.deleteOrderDetails,
+    onSuccess: (res) => {
+      toast.success(res.data.message, { autoClose: 1000 })
+      refetch()
+    }
+  })
+
+  const handleDeletePurchase = (orderDetailId: number) => {
+    deletePurchasesMutation.mutate({ ids: [orderDetailId] })
   }
 
   const onSubmit = handleSubmit((data) => {
@@ -220,7 +232,7 @@ export default function Header() {
               <ShoppingCartIcon className='w-7 h-7' />
 
               {/* Badge (nếu muốn show số lượng) */}
-              {isAuthenticated && purchasesInCart && (
+              {isAuthenticated && purchasesInCart && purchasesInCart[0].order_details.length > 0 && (
                 <span className='absolute -top-1 -right-2 bg-red-500 text-white text-xs px-1 rounded-full'>
                   {purchasesInCart[0].order_details.length}
                 </span>
@@ -229,7 +241,7 @@ export default function Header() {
           }
           renderPopover={
             <div className='w-80 bg-white rounded-xl shadow-xl border overflow-hidden'>
-              {purchasesInCart && purchasesInCart.length > 0 ? (
+              {purchasesInCart && purchasesInCart[0].order_details.length > 0 ? (
                 <div className='text-sm'>
                   {/* Header */}
                   <div className='p-4 border-b'>
@@ -238,18 +250,18 @@ export default function Header() {
                   {/* Item */}
                   {purchasesInCart[0].order_details.slice(0, MAX_PURCHASES).map((item) => {
                     return (
-                      <div className='p-3 flex gap-3 border-b'>
+                      <div className='p-3 flex gap-3 border-b' key={item.order_detail_id}>
                         <img
-                          src={item.product_image[0].image_url}
+                          src={item.product.product_image[0].image_url}
                           className='w-12 h-12 rounded object-cover'
                           alt='item'
                         />
                         <div className='flex-1'>
                           <Link
-                            to={`/product-detail/${generateNameId({ name: item.product_name, id: item.product_id.toString() })}`}
+                            to={`/product-detail/${generateNameId({ name: item.product.product_name, id: item.product.product_id.toString() })}`}
                             className='text-sm text-blue-600 hover:underline line-clamp-2'
                           >
-                            {item.product_name}
+                            {item.product.product_name}
                           </Link>
                           <div className='mt-1'>
                             <p className='font-semibold'>Unit Price: ${item.unit_price}</p>
@@ -257,7 +269,10 @@ export default function Header() {
                         </div>
                         <div className='flex flex-col items-end justify-between'>
                           <span className='text-sm text-gray-600'>Qty: {item.quantity}</span>
-                          <button className='text-gray-500 hover:text-red-500'>
+                          <button
+                            onClick={() => handleDeletePurchase(item.order_detail_id)}
+                            className='text-gray-500 hover:text-red-500'
+                          >
                             <svg
                               xmlns='http://www.w3.org/2000/svg'
                               fill='none'
@@ -293,12 +308,15 @@ export default function Header() {
 
                   {/* Actions */}
                   <div className='p-4 flex flex-col gap-3'>
-                    <button className='bg-blue-600 text-white py-2 rounded-lg font-medium hover:bg-blue-700 transition'>
+                    {/* <button className='bg-blue-600 text-white py-2 rounded-lg font-medium hover:bg-blue-700 transition'>
                       Checkout
-                    </button>
-                    <button className='border border-blue-600 text-blue-600 py-2 rounded-lg font-medium hover:bg-blue-50 transition'>
+                    </button> */}
+                    <Link
+                      to={path.cart}
+                      className=' flex justify-center bg-blue-600 text-white py-2 rounded-lg font-medium hover:bg-blue-700 transition'
+                    >
                       View cart
-                    </button>
+                    </Link>
                   </div>
                 </div>
               ) : (

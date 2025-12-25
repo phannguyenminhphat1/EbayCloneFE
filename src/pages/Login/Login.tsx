@@ -37,7 +37,7 @@ export default function Login() {
         console.log(res)
         setIsAuthenticated(true)
         setProfile(res.data.data?.user as User)
-        toast.success(res.data.message, { autoClose: 2000 })
+        toast.success(res.data.message, { autoClose: 1000 })
         navigate(path.home)
       },
       onError: (err) => {
