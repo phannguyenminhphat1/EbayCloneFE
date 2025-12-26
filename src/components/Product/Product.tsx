@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom'
 import { ListingProductDetail } from 'src/types/product.type'
 import ProductRating from '../ProductRating'
-import { generateNameId } from 'src/utils/utils'
+import { formatted, generateNameId } from 'src/utils/utils'
 
 interface Props {
   className?: string
@@ -9,11 +9,6 @@ interface Props {
 }
 
 export default function Product({ prod }: Props) {
-  const formatted = (valueDate: Date) => {
-    return `${valueDate.getFullYear()}/${String(valueDate.getMonth() + 1).padStart(2, '0')}/${String(valueDate.getDate()).padStart(2, '0')}
- - ${String(valueDate.getHours()).padStart(2, '0')}:${String(valueDate.getMinutes()).padStart(2, '0')}`
-  }
-
   return (
     <div className='flex gap-6 p-4 border rounded-lg shadow-sm hover:shadow transition'>
       {/* Product Image */}

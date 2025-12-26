@@ -41,3 +41,8 @@ export const getIdFromNameId = (nameId: string) => {
   const arr = nameId.split('-i-')
   return arr[arr.length - 1]
 }
+
+export const formatted = (valueDate: Date) => {
+  return `${valueDate.getFullYear()}/${String(valueDate.getMonth() + 1).padStart(2, '0')}/${String(valueDate.getDate()).padStart(2, '0')}
+ - ${String(valueDate.getHours()).padStart(2, '0')}:${String(valueDate.getMinutes()).padStart(2, '0')}`
+}
