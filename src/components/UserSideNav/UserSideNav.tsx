@@ -1,5 +1,6 @@
+import classNames from 'classnames'
 import { useContext } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, NavLink } from 'react-router-dom'
 import path from 'src/constant/path'
 import { AppContext } from 'src/contexts/app.context'
 
@@ -23,15 +24,39 @@ export default function UserSideNav() {
           </div>
         </div>
         <nav className='space-y-2'>
-          <a href='#' className='flex items-center gap-3 px-3 py-2 rounded-md bg-blue-50 text-blue-600 font-medium'>
+          <NavLink
+            to={path.profile}
+            className={({ isActive }) =>
+              classNames('flex items-center gap-3 px-3 py-2 rounded-md  ', {
+                'text-blue-600 font-medium bg-blue-50': isActive,
+                'bg-transparent font-normal hover:bg-gray-100': !isActive
+              })
+            }
+          >
             Profile
-          </a>
-          <a href='#' className='flex items-center gap-3 px-3 py-2 rounded-md hover:bg-gray-100'>
+          </NavLink>
+          <NavLink
+            to={path.changePassword}
+            className={({ isActive }) =>
+              classNames('flex items-center gap-3 px-3 py-2 rounded-md  ', {
+                'text-blue-600 font-medium bg-blue-50': isActive,
+                'bg-transparent font-normal hover:bg-gray-100': !isActive
+              })
+            }
+          >
             Change Password
-          </a>
-          <a href='#' className='flex items-center gap-3 px-3 py-2 rounded-md hover:bg-gray-100'>
+          </NavLink>
+          <NavLink
+            to={path.purchaseHistory}
+            className={({ isActive }) =>
+              classNames('flex items-center gap-3 px-3 py-2 rounded-md  ', {
+                'text-blue-600 font-medium bg-blue-50': isActive,
+                'bg-transparent font-normal hover:bg-gray-100': !isActive
+              })
+            }
+          >
             Purchase History
-          </a>
+          </NavLink>
         </nav>
       </aside>
     </div>

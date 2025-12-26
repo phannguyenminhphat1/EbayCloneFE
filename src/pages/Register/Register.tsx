@@ -149,7 +149,7 @@ export default function Register() {
               classNameLabel='text-sm text-gray-700'
               label='Password'
               type='password'
-              className=''
+              className='relative'
               classNameInput='w-full px-4 py-2 border border-gray-300 rounded focus:ring-2
              focus:ring-blue-600 focus:outline-none text-[15px]'
               register={register}
@@ -162,7 +162,7 @@ export default function Register() {
               classNameLabel='text-sm text-gray-700'
               label='Confirm password'
               type='password'
-              className=''
+              className='relative'
               classNameInput='w-full px-4 py-2 border border-gray-300 rounded focus:ring-2
              focus:ring-blue-600 focus:outline-none text-[15px]'
               register={register}

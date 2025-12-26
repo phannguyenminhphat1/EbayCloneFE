@@ -13,7 +13,7 @@ interface UpdateMe {
 const userApi = {
   getMe: () => http.get<ResponseApi<User>>('user/get-me'),
   updateMe: (body: UpdateMe) => http.put<ResponseApi<User>>('user/update-me', body),
-  changePassword: (body: { password: string; new_password: string }) =>
+  changePassword: (body: { old_password: string; new_password: string; confirm_password: string }) =>
     http.put<{ message: string }>('user/change-password', body),
   uploadAvatar: (body: FormData) =>
     http.post<ResponseApi<string>>('user/upload-avatar', body, {

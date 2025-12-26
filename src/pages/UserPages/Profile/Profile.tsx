@@ -1,11 +1,12 @@
 import { yupResolver } from '@hookform/resolvers/yup'
 import { useMutation, useQuery } from '@tanstack/react-query'
-import { useContext, useEffect, useMemo, useRef, useState } from 'react'
+import { useContext, useEffect, useMemo, useState } from 'react'
 import { useForm, Controller } from 'react-hook-form'
 import { toast } from 'react-toastify'
 import userApi from 'src/apis/user.api'
 import Button from 'src/components/Button'
 import Input from 'src/components/Input'
+import InputFile from 'src/components/InputFile'
 import InputNumber from 'src/components/InputNumber'
 import { AppContext } from 'src/contexts/app.context'
 import { User } from 'src/types/user.type'
@@ -21,7 +22,6 @@ const profileSchema = userSchema.pick(['username', 'fullname', 'address', 'ava',
 export default function Profile() {
   const { setProfile } = useContext(AppContext)
   const [file, setFile] = useState<File>()
-  const fileInputRef = useRef<HTMLInputElement | null>(null)
   const previewImage = useMemo(() => (file ? URL.createObjectURL(file) : ''), [file])
   const {
     register,
@@ -87,7 +87,6 @@ export default function Profile() {
         setValue('ava', avatarName)
       }
       updateProfileMutation.mutate({ ...data, ava: avatarName })
-      console.log(data)
     },
     (err) => {
       console.log(err)
@@ -104,13 +103,8 @@ export default function Profile() {
     }
   }, [profile, setValue])
 
-  const handleUpload = () => {
-    fileInputRef.current?.click()
-  }
-
-  const onFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const fileFromLocal = e.target.files?.[0]
-    setFile(fileFromLocal)
+  const handleChangeFile = (file?: File) => {
+    setFile(file)
   }
   return (
     <div className='flex-1 bg-white rounded-lg shadow p-6'>
@@ -124,20 +118,12 @@ export default function Profile() {
             className='w-40 h-40 border-gray-600 rounded-full border-2 object-cover'
           />
 
-          <input className='hidden' type='file' accept='.jpg,.jpeg,.png' ref={fileInputRef} onChange={onFileChange} />
-          <button
-            onClick={handleUpload}
-            type='button'
-            className='mt-4 px-4 py-2 border border-gray-300 transition-all rounded text-sm hover:bg-gray-100'
-          >
-            Change avatar
-          </button>
+          <InputFile onChange={handleChangeFile} />
           <p className='text-xs mt-3 text-gray-500 flex flex-wrap'>Max file size 1MB. File accept *.jpg .png .jpeg*</p>
         </div>
         {/* FORM */}
         <div className='flex-1'>
           <Input
-            value={profileData?.data.data?.username}
             className=''
             classNameLabel='block text-sm font-medium mb-1'
             label='Username'
