@@ -14,6 +14,8 @@ import UserLayout from './layouts/UserLayout'
 import Profile from './pages/UserPages/Profile'
 import ChangePassword from './pages/UserPages/ChangePassword'
 import PurchaseHistory from './pages/UserPages/PurchaseHistory'
+import Post from './pages/Post'
+import CreatePostCategory from './pages/CreatePostCategory'
 
 function ProtectedRoute() {
   const { isAuthenticated } = useContext(AppContext)
@@ -84,6 +86,22 @@ export default function useRouteElements() {
           element: (
             <MainLayout>
               <Cart />
+            </MainLayout>
+          )
+        },
+        {
+          path: path.post,
+          element: (
+            <MainLayout>
+              <Post />
+            </MainLayout>
+          )
+        },
+        {
+          path: path.postCategory,
+          element: (
+            <MainLayout>
+              <CreatePostCategory />
             </MainLayout>
           )
         },

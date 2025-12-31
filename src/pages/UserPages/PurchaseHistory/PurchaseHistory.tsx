@@ -1,6 +1,8 @@
-import { useQuery } from '@tanstack/react-query'
+import { useMutation, useQuery } from '@tanstack/react-query'
 import classNames from 'classnames'
-import { createSearchParams, Link } from 'react-router-dom'
+import { useEffect } from 'react'
+import { createSearchParams, Link, useNavigate } from 'react-router-dom'
+import { toast } from 'react-toastify'
 import purchaseApi from 'src/apis/purchase.api'
 import path from 'src/constant/path'
 import { purchaseStatusString } from 'src/constant/purchaseConstant'
@@ -11,6 +13,7 @@ import Swal from 'sweetalert2'
 
 export default function PurchaseHistory() {
   const queryParams = useQueryParams()
+  const navigate = useNavigate()
   const status: string = queryParams.status
 
   const purchaseTab = [
@@ -24,7 +27,30 @@ export default function PurchaseHistory() {
     queryFn: () => purchaseApi.getOrders({ status: status as PurchaseListStatus })
   })
 
-  const handleCancelPurchase = () => {
+  const cancelOrderMutation = useMutation({
+    mutationFn: purchaseApi.cancelOrder,
+    onSuccess: (res) => {
+      toast.success(res.data.message, { autoClose: 1000 })
+      refetch()
+    }
+  })
+  console.log(purchasesData?.data.data?.data)
+
+  useEffect(() => {
+    if (!status) {
+      navigate(
+        {
+          pathname: path.purchaseHistory,
+          search: createSearchParams({
+            status: purchaseStatusString.WaitingOwnerConfirmation
+          }).toString()
+        },
+        { replace: true }
+      )
+    }
+  }, [status, navigate])
+
+  const handleCancelPurchase = (orderId: string) => {
     Swal.fire({
       title: 'Do you want to cancel this order ?',
       icon: 'warning',
@@ -35,7 +61,7 @@ export default function PurchaseHistory() {
       cancelButtonText: 'No Cancel'
     }).then((result) => {
       if (result.isConfirmed) {
-        console.log(123)
+        cancelOrderMutation.mutate(orderId)
       }
     })
   }
@@ -64,68 +90,69 @@ export default function PurchaseHistory() {
       </div>
       {/* Order Item */}
       {purchasesData &&
-        purchasesData.data.data?.data.orders.map((order) => {
-          return order.order_details.map((purchase) => {
-            return (
-              <div className='border rounded-lg mb-6'>
-                {/* Order Header */}
-                <div className='flex items-center justify-between px-4 py-3 bg-gray-50 rounded-t-lg'>
-                  <div className='flex items-center gap-2'>
+        purchasesData.data.data?.data.orders.map((order) => (
+          <div key={order.order_id} className='border rounded-lg mb-6'>
+            {/* Order Header */}
+            <div className='flex items-center justify-between px-4 py-3 bg-gray-50 rounded-t-lg'>
+              <div className='flex items-center gap-2'>
+                <span className='font-semibold'>Order #{order.order_id}</span>
+                <span className='text-xs text-green-600 bg-green-100 px-2 py-1 rounded'>{order.order_status}</span>
+              </div>
+              <div className='text-sm text-gray-500'>Created Date: {formatted(new Date(order.order_created_at))}</div>
+            </div>
+
+            {/* Order Details */}
+            {order.order_details.map((item) => (
+              <div key={item.order_detail_id} className='flex gap-4 p-4 border-t'>
+                <img
+                  src={item.product.product_image[0]?.image_url}
+                  alt={item.product.product_name}
+                  className='w-20 border p-2 h-20 object-cover rounded'
+                />
+
+                <div className='flex-1'>
+                  <Link
+                    to={`/product-detail/${generateNameId({ name: item.product.product_name, id: item.product.product_id.toString() })}`}
+                    className='font-semibold line-clamp-2 hover:underline transition-all'
+                  >
+                    {item.product.product_name}
+                  </Link>
+                  <p className='text-sm text-gray-500 mt-1'>Quantity: {item.quantity}</p>
+
+                  <div className='flex items-center gap-1 mt-1'>
+                    <span className='text-sm text-gray-500'>Seller: </span>
                     <img
-                      src={purchase.seller.seller_avatar || 'https://i.pravatar.cc/150'}
-                      alt='asd'
-                      className='w-6 border h-6 object-cover overflow-hidden border-gray-500 rounded-full'
+                      src={item.seller.seller_avatar || 'https://i.pravatar.cc/150'}
+                      className='w-5 h-5 rounded-full border border-gray-600'
                     />
-                    <span className='font-semibold'>{purchase.seller.seller_fullname}</span>
-                    <span className='text-xs text-green-600 bg-green-100 px-2 py-1 rounded'>Waiting confirmation</span>
-                  </div>
-                  <div className='flex flex-col '>
-                    <span className='text-sm text-gray-500'>Order: #{purchase.order_detail_id}</span>
-                    <span className='text-sm text-gray-500'>
-                      Created Date: {formatted(new Date(order.order_created_at))}
-                    </span>
+                    <span className='text-sm text-gray-600'>{item.seller.seller_fullname}</span>
                   </div>
                 </div>
-                {/* Product */}
-                <div className='flex gap-4 p-4 border-t'>
-                  <img
-                    src={purchase.product.product_image[0].image_url}
-                    alt='asd'
-                    className='w-20 border p-2 h-20 object-cover rounded'
-                  />
-                  <div className='flex-1'>
-                    <p className='font-semibold line-clamp-2'>{purchase.product.product_name}</p>
-                    <p className='text-sm text-gray-500 mt-1'>Quantity: {purchase.quantity}</p>
-                  </div>
-                  <div className='text-right'>
-                    <p className='font-semibold text-gray-900'>${purchase.unit_price}</p>
-                  </div>
-                </div>
-                {/* Order Footer */}
-                <div className='flex items-center justify-between px-4 py-3 border-t bg-gray-50'>
-                  <div className='text-sm'>
-                    <span className='text-gray-500'>Total:</span>
-                    <span className='font-semibold text-lg ml-2'>${purchase.quantity * purchase.unit_price}</span>
-                  </div>
-                  <div className='flex gap-3'>
-                    <Link
-                      to={`/product-detail/${generateNameId({ name: purchase.product.product_name, id: purchase.product.product_id.toString() })}`}
-                      className='px-4 py-2 text-sm border border-gray-400 rounded transition-all hover:bg-gray-100'
-                    >
-                      View details
-                    </Link>
-                    <button
-                      onClick={handleCancelPurchase}
-                      className='px-4 py-2 text-sm text-red-600 border border-red-600 rounded transition-all hover:bg-red-50'
-                    >
-                      Cancel order
-                    </button>
-                  </div>
+
+                <div className='text-right'>
+                  <p className='font-semibold text-gray-900'>${item.unit_price.toFixed(2)}</p>
                 </div>
               </div>
-            )
-          })
-        })}
+            ))}
+
+            {/* Order Footer */}
+            <div className='flex items-center justify-between px-4 py-3 border-t bg-gray-50'>
+              <div className='text-sm'>
+                <span className='text-gray-500'>Total:</span>
+                <span className='font-semibold text-lg ml-2'>${order.total_amount.toFixed(2)}</span>
+              </div>
+
+              <div className='flex gap-3'>
+                <button
+                  onClick={() => handleCancelPurchase(order.order_id.toString())}
+                  className='px-4 py-2 text-sm text-red-600 border border-red-600 rounded hover:bg-red-50'
+                >
+                  Cancel order
+                </button>
+              </div>
+            </div>
+          </div>
+        ))}
 
       {purchasesData && purchasesData.data.data?.data.orders.length === 0 && (
         <div className='p-4 text-sm flex flex-col items-center justify-center text-gray-600'>

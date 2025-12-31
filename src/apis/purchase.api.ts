@@ -10,6 +10,7 @@ const purchaseApi = {
       params
     }),
   deleteOrderDetails: (body: { ids: number[] }) => http.post<{ message: string }>('/order/delete-order-details', body),
+  cancelOrder: (id: string) => http.put<{ message: string }>(`/order/cancel-order/${id}`),
   updateOrderDetail: (body: { order_detail_id: number; quantity: string }) =>
     http.put<{ message: string }>('/order/update-order-detail', body),
   buyProducts: (body: { ids: number[] }) => http.post<{ message: string }>('/order/buy-products', body)

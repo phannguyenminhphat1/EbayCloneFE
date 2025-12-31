@@ -46,6 +46,7 @@ export default function Profile() {
     queryKey: ['profile'],
     queryFn: userApi.getMe
   })
+  console.log(profileData)
   const profile = profileData?.data.data
 
   const updateProfileMutation = useMutation({

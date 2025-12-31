@@ -19,6 +19,7 @@ import purchaseApi from 'src/apis/purchase.api'
 import { purchaseStatusString } from 'src/constant/purchaseConstant'
 import { PurchaseListStatus } from 'src/types/purchase.type'
 import { generateNameId } from 'src/utils/utils'
+import Swal from 'sweetalert2'
 
 type FormData = Pick<Schema, 'product_name'> & {
   category_id?: string
@@ -104,17 +105,33 @@ export default function Header() {
     })
   })
 
+  const handleClickPostNews = () => {
+    if (!isAuthenticated) {
+      Swal.fire({
+        title: 'You’re logged out',
+        text: 'Log in to post news',
+        showCancelButton: true,
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#d33',
+        confirmButtonText: 'Login now'
+      }).then((result) => {
+        if (result.isConfirmed) {
+          navigate('/login')
+        }
+      })
+    } else {
+      navigate(path.post)
+    }
+  }
+
   return (
     <header className='shadow bg-white'>
       {/* Title and Login */}
       <div className='py-1 bg-gray-100 text-xs'>
         <div className='container'>
-          <div className='flex justify-end items-center'>
+          <div className='flex justify-end items-center gap-6'>
             <div>
-              <NavLink
-                to='https://www.ebay.com/help/home'
-                className='mr-8 outline-none hover:underline hover:text-blue-600'
-              >
+              <NavLink to='https://www.ebay.com/help/home' className='outline-none hover:underline hover:text-blue-600'>
                 Help & Contact
               </NavLink>
             </div>
@@ -161,6 +178,12 @@ export default function Header() {
                 </span>
               </div>
             )}
+            <div
+              onClick={handleClickPostNews}
+              className='text-blue-600 underline hover:opacity-60 transition-all cursor-pointer'
+            >
+              <p>Post news</p>
+            </div>
           </div>
         </div>
       </div>
